@@ -12,7 +12,7 @@ const Drivers = () => {
   // ================= FETCH DRIVERS =================
   const fetchDrivers = async () => {
     try {
-      const res = await instance.get("/admin/drivers");
+      const res = await instance.get("/drivers");
       const data = res.data?.drivers || res.data || [];
       setDrivers(data);
     } catch (err) {
@@ -28,7 +28,7 @@ const Drivers = () => {
   // ================= ADD DRIVER =================
   const handleAddDriver = async () => {
     try {
-      await instance.post("/admin/drivers", form);
+      await instance.post("/drivers", form);
 
       alert("Driver added");
 
@@ -42,7 +42,7 @@ const Drivers = () => {
   // ================= TOGGLE STATUS =================
   const toggleStatus = async (id) => {
     try {
-      await instance.put(`/admin/drivers/${id}/toggle`);
+      await instance.put(`/drivers/${id}/toggle`);
       fetchDrivers();
     } catch (err) {
       console.log(err);

@@ -24,7 +24,7 @@ const Bookings = () => {
   // ================= FETCH DRIVERS =================
   const fetchDrivers = async () => {
     try {
-      const res = await instance.get("/admin/drivers");
+      const res = await instance.get("/drivers");
 
       const data = res.data?.drivers || res.data || [];
       setDrivers(Array.isArray(data) ? data : []);
@@ -62,7 +62,7 @@ const Bookings = () => {
   // ================= CANCEL =================
   const handleCancel = async (id) => {
     try {
-      await instance.put(`/admin/${id}/cancel`);
+      await instance.put(`/${id}/cancel`);
       fetchBookings();
       fetchDrivers();
     } catch (err) {
@@ -77,7 +77,7 @@ const Bookings = () => {
 
       if (!driverId) return alert("Select driver");
 
-      await instance.post(`/admin/assign-driver/${bookingId}`, {
+      await instance.post(`/assign-driver/${bookingId}`, {
         driverId,
       });
 
@@ -93,7 +93,7 @@ const Bookings = () => {
   // ================= AUTO ASSIGN =================
   const handleAutoAssign = async (bookingId) => {
     try {
-      await instance.post(`/admin/auto-assign/${bookingId}`);
+      await instance.post(`/auto-assign/${bookingId}`);
       alert("Driver auto assigned");
 
       fetchBookings();

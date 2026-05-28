@@ -13,7 +13,7 @@ const MyBookings = () => {
     if (userId) fetchBookings();
   }, [userId]);
 
-  // 🔄 GET BOOKINGS
+  //  GET BOOKINGS
   const fetchBookings = async () => {
     try {
       const res = await instance.get("/bookings");
@@ -23,7 +23,7 @@ const MyBookings = () => {
     }
   };
 
-  // ❌ CANCEL
+  // CANCEL
   const cancelBooking = async (id) => {
     try {
       await instance.put(`/bookings/${id}/cancel`);
@@ -57,15 +57,27 @@ const MyBookings = () => {
 
       const pricePerDay = booking.carId?.pricePerDay || 0;
       const basePrice = days * pricePerDay;
-      const tax = Math.round(basePrice * 0.2);
-      const discount = 10;
-      const totalAmount = basePrice + tax - discount;
+      let taxPercentage = 18;
 
-      const amountInPaise = totalAmount * 100;
+      let discount = 0;
 
-      // 1️⃣ create order
+      if (basePrice >= 5000) {
+        discount = 1000;
+      } else if (basePrice >= 3000) {
+        discount = 500;
+      } else if (basePrice >= 1500) {
+        discount = 200;
+      }
+
+      const tax = Math.round((basePrice * taxPercentage) / 100);
+
+      const finalTotal = basePrice + tax - discount;
+
+      const amountInPaise = finalTotal * 100;
+
       const { data } = await instance.post("/payment/create-order", {
         bookingId: booking._id,
+        amount: amountInPaise,
       });
 
       // 2️⃣ razorpay options
@@ -169,9 +181,25 @@ const MyBookings = () => {
 
     const pricePerDay = b.carId?.pricePerDay || 0;
     const basePrice = days * pricePerDay;
-    const tax = Math.round(basePrice * 0.2);
-    const discount = 10;
-    const total = basePrice + tax - discount;
+    // GST / TAX (government based)
+    let taxPercentage = 18;
+
+    // DISCOUNT BASED ON AMOUNT
+    let discount = 0;
+
+    if (basePrice >= 5000) {
+      discount = 1000;
+    } else if (basePrice >= 3000) {
+      discount = 500;
+    } else if (basePrice >= 1500) {
+      discount = 200;
+    }
+
+    // TAX CALCULATION
+    const tax = Math.round((basePrice * taxPercentage) / 100);
+
+    // FINAL TOTAL
+    const finalTotal = basePrice + tax - discount;
 
     return (
       <div
@@ -237,13 +265,29 @@ const MyBookings = () => {
         </div>
 
         {/* PRICE */}
-        <div className="mt-3 text-sm">
-          <p>Base: ₹{basePrice}</p>
-          <p>Tax: ₹{tax}</p>
-          <p>Discount: ₹{discount}</p>
-          <p className="font-bold">Total: ₹{total}</p>
-        </div>
+        <div className="mt-4 bg-gray-50 p-4 rounded-xl border text-sm space-y-2">
+          <div className="flex justify-between">
+            <span>Base Price</span>
+            <span>₹{basePrice}</span>
+          </div>
 
+          <div className="flex justify-between">
+            <span>Government GST ({taxPercentage}%)</span>
+            <span>₹{tax}</span>
+          </div>
+
+          {discount > 0 && (
+            <div className="flex justify-between text-green-600 font-medium">
+              <span>Discount Applied</span>
+              <span>- ₹{discount}</span>
+            </div>
+          )}
+
+          <div className="border-t pt-2 flex justify-between text-lg font-bold">
+            <span>Final Payment</span>
+            <span className="text-blue-600">₹{finalTotal}</span>
+          </div>
+        </div>
         {/* BUTTONS */}
         <div className="mt-4 flex gap-2 justify-end">
           {/* WAITING */}
@@ -254,13 +298,33 @@ const MyBookings = () => {
           )}
 
           {/* APPROVED → ALLOW PAYMENT */}
-          {b.status === "confirmed" && (
+          {b.status === "confirmed" && b.paymentStatus !== "paid" && (
             <button
               onClick={() => handlePayment(b)}
               className="bg-blue-600 text-white px-4 py-2 rounded"
             >
               Continue to Payment
             </button>
+          )}
+
+          {b.paymentStatus === "paid" && b.driverId && (
+            <div className="mt-4 bg-green-50 p-3 rounded-lg border">
+              <h3 className="font-bold text-green-700 mb-2">
+                🚗 Your Driver Details
+              </h3>
+
+              <p>
+                <b>Name:</b> {b.driverId.name}
+              </p>
+
+              <p>
+                <b>Phone:</b> {b.driverId.phone}
+              </p>
+
+              <p>
+                <b>License:</b> {b.driverId.license}
+              </p>
+            </div>
           )}
 
           {/*  CANCEL */}

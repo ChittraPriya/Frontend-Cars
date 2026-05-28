@@ -116,13 +116,17 @@ const router = createBrowserRouter([
         path: "drivers",
         element: <Drivers />,
       },
+      {
+        path: "offers",
+        element : <Offers />
+      }
     ],
   },
 ]);
 
 const App = () => {
   return (
-    <AuthProvider>
+    <>
     <RouterProvider router= {router} />
   <ToastContainer 
   position= "top-right"
@@ -136,7 +140,7 @@ const App = () => {
   pauseOnHover
   theme="light"
   />
-  </AuthProvider>
+  </>
   )
 }
 

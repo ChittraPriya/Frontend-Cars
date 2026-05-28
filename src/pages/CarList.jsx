@@ -13,7 +13,7 @@ const Cars = () => {
         setCars(res.data.cars || []); 
       } catch (error) {
         console.log(error);
-        setCars([]); // safety fallback
+        setCars([]); 
       }
     };
 

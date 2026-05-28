@@ -1,133 +1,233 @@
-import { BadgePercent, Copy } from "lucide-react";
-import React, { useState } from "react";
+import { Copy, Trash2 } from "lucide-react";
+
+import React, { useEffect, useState } from "react";
+
+import instance from "../instances/instance";
+
+import { useAuth } from "../context/AuthContext";
 
 const Offers = () => {
+  const { user } = useAuth();
+
+  const isAdmin = user?.role === "admin";
+
+  const [offers, setOffers] = useState([]);
+
   const [activeTab, setActiveTab] = useState("all");
 
-  const offers = [
-    {
-      id: 1,
-      type: "seasonal",
-      title: "Flat 15% OFF",
-      code: "DRIVE15",
-      desc: "Get flat 15% off on all bookings",
-      img: "https://source.unsplash.com/400x300/?car,sport",
-    },
-    {
-      id: 2,
-      type: "seasonal",
-      title: "Weekend Special",
-      code: "WEEKEND20",
-      desc: "Save more on weekend rides",
-      img: "https://source.unsplash.com/400x300/?road,car",
-    },
-    {
-      id: 3,
-      type: "bank",
-      title: "HDFC Bank Offer",
-      code: "HDFC25",
-      desc: "25% cashback using HDFC cards",
-      img: "https://source.unsplash.com/400x300/?bank,card",
-    },
-    {
-      id: 4,
-      type: "bank",
-      title: "ICICI Discount",
-      code: "ICICI20",
-      desc: "Flat 20% off for ICICI users",
-      img: "https://source.unsplash.com/400x300/?money,bank",
-    },
-    {
-      id: 5,
-      type: "all",
-      title: "First Ride Offer",
-      code: "FIRST10",
-      desc: "Extra discount for first-time users",
-      img: "https://source.unsplash.com/400x300/?car,travel",
-    },
-  ];
+  const [uploading, setUploading] = useState(false);
 
+  const [formData, setFormData] = useState({
+    title: "",
+    code: "",
+    desc: "",
+    type: "all",
+    img: "",
+  });
+
+  // FETCH OFFERS
+  useEffect(() => {
+    fetchOffers();
+  }, []);
+
+  const fetchOffers = async () => {
+    try {
+      const res = await instance.get("/offers");
+
+      setOffers(res.data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // CREATE OFFER
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      await instance.post("/offers", formData);
+
+      fetchOffers();
+
+      setFormData({
+        title: "",
+        code: "",
+        desc: "",
+        type: "all",
+        img: "",
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // DELETE
+  const deleteOffer = async (id) => {
+    try {
+      await instance.delete(`/offers/${id}`);
+
+      fetchOffers();
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // FILTER
   const filteredOffers =
     activeTab === "all"
       ? offers
       : offers.filter((item) => item.type === activeTab);
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    setUploading(true);
+
+    const data = new FormData();
+
+    data.append("file", file);
+
+    data.append("upload_preset", "car_rental");
+
+    try {
+      const res = await fetch(
+        "https://api.cloudinary.com/v1_1/dcstbjyev/image/upload",
+        {
+          method: "POST",
+          body: data,
+        },
+      );
+
+      const uploadedImage = await res.json();
+
+      setFormData((prev) => ({
+        ...prev,
+        img: uploadedImage.secure_url,
+      }));
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
-    <div className="bg-gray-50">
+    <div className="bg-gray-50 min-h-screen">
+      {/* TITLE */}
+      <h2 className="text-4xl font-bold text-center py-8">Offers</h2>
 
-      {/* PAGE TITLE */}
-      <h2 className="text-4xl font-bold text-center py-8">
-        Offers
-      </h2>
+      {/* ADMIN FORM */}
+      {isAdmin && (
+        <div className="max-w-3xl mx-auto bg-white p-6 rounded-3xl shadow mb-10">
+          <h3 className="text-2xl font-bold mb-5">Add Offer</h3>
 
-      {/* HERO BANNER */}
-      <div className="relative w-full h-[300px] md:h-[400px]">
-        <img
-          src="https://images.unsplash.com/photo-1503376780353-7e6692767b70"
-          className="w-full h-full object-cover rounded-3xl"
-        />
+          <form onSubmit={handleSubmit} className="grid gap-4">
+            <input
+              type="text"
+              placeholder="Offer Title"
+              value={formData.title}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  title: e.target.value,
+                })
+              }
+              className="border p-3 rounded-xl"
+            />
 
-        <div className="absolute inset-0 bg-black/60 rounded-3xl flex flex-col justify-center px-10 text-white">
+            <input
+              type="text"
+              placeholder="Coupon Code"
+              value={formData.code}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  code: e.target.value,
+                })
+              }
+              className="border p-3 rounded-xl"
+            />
 
-          <h3 className="text-3xl md:text-5xl font-bold">
-            Special Summer Offer ☀️
-          </h3>
+            <textarea
+              placeholder="Description"
+              value={formData.desc}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  desc: e.target.value,
+                })
+              }
+              className="border p-3 rounded-xl"
+            />
 
-          <p className="mt-3 text-lg">
-            Get up to <b>30% OFF</b> on selected cars
-          </p>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="border p-3 rounded-xl"
+            />
 
-          <p className="mt-2">
-            Use Code: <span className="font-bold">SUMMER30</span>
-          </p>
+            <select
+              value={formData.type}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  type: e.target.value,
+                })
+              }
+              className="border p-3 rounded-xl"
+            >
+              <option value="all">All</option>
 
-          <p className="text-sm mt-2 text-gray-200">
-            Valid till 30 June 2026
-          </p>
+              <option value="bank">Bank</option>
 
+              <option value="seasonal">Seasonal</option>
+            </select>
+
+            <button className="bg-blue-600 text-white py-3 rounded-xl">
+              Add Offer
+            </button>
+          </form>
         </div>
-      </div>
+      )}
 
       {/* TABS */}
-      <div className="flex justify-center gap-4 mt-10">
-
+      <div className="flex justify-center gap-4 mb-10">
         {["all", "bank", "seasonal"].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-6 py-2 rounded-full font-semibold transition
-              ${
-                activeTab === tab
-                  ? "bg-blue-600 text-white"
-                  : "bg-white text-gray-600 border"
-              }`}
+            className={`px-6 py-2 rounded-full font-semibold transition ${
+              activeTab === tab ? "bg-blue-600 text-white" : "bg-white border"
+            }`}
           >
-            {tab === "all"
-              ? "All Offers"
-              : tab === "bank"
-              ? "Bank Offers"
-              : "Seasonal Offers"}
+            {tab}
           </button>
         ))}
-
       </div>
 
-      {/* OFFERS GRID */}
-      <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 mt-10 px-6 pb-16">
-
+      {/* GRID */}
+      <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 px-6 pb-16">
         {filteredOffers.map((offer) => (
           <div
-            key={offer.id}
-            className="bg-white rounded-3xl shadow-md hover:shadow-xl transition overflow-hidden"
+            key={offer._id}
+            className="bg-white rounded-3xl shadow overflow-hidden relative"
           >
+            {/* DELETE */}
+            {isAdmin && (
+              <button
+                onClick={() => deleteOffer(offer._id)}
+                className="absolute top-3 right-3 bg-red-500 text-white p-2 rounded-full"
+              >
+                <Trash2 size={18} />
+              </button>
+            )}
 
-            <img
-              src={offer.img}
-              className="h-40 w-full object-cover"
-            />
+            <img src={offer.img} className="h-40 w-full object-cover" />
 
             <div className="p-6">
-
               <h2 className="text-xl font-bold">{offer.title}</h2>
 
               <p className="text-gray-500 mt-2">{offer.desc}</p>
@@ -138,20 +238,20 @@ const Offers = () => {
                   {offer.code}
                 </span>
 
-                <Copy className="cursor-pointer text-gray-500 hover:text-blue-600" size={18} />
+                <Copy
+                  className="cursor-pointer"
+                  size={18}
+                  onClick={() => navigator.clipboard.writeText(offer.code)}
+                />
               </div>
 
-              <button className="w-full mt-5 bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition">
+              <button className="w-full mt-5 bg-blue-600 text-white py-2 rounded-xl">
                 Apply Offer
               </button>
-
             </div>
-
           </div>
         ))}
-
       </div>
-
     </div>
   );
 };

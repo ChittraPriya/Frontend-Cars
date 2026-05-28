@@ -9,15 +9,16 @@ import {
   LogOut,
 } from "lucide-react";
 import { logoutUser } from "../services/authServices";
+import { BiSolidOffer } from "react-icons/bi";
 
 const Sidebar = () => {
   const navigate = useNavigate();
 
   const logout = async () => {
     try {
-      await logoutUser(); // axios instance
+      await logoutUser(); 
 
-      localStorage.clear(); // optional
+      localStorage.clear(); 
       navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);
@@ -86,6 +87,17 @@ const Sidebar = () => {
             }
           >
             <Truck size={18} /> Drivers
+          </NavLink>
+
+          <NavLink
+            to="/admin/offers"
+            className={({ isActive }) =>
+              `flex items-center gap-2 p-2 rounded hover:bg-gray-700 ${
+                isActive ? "bg-gray-700" : ""
+              }`
+            }
+          >
+            <BiSolidOffer size={18} /> Offers
           </NavLink>
 
         </div>

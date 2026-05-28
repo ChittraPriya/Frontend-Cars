@@ -1,22 +1,49 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
+import axios from "axios";
 
 export const AuthContext = createContext();
 
-// Provider
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = (userData) => setUser(userData);
-  const logout = () => setUser(null);
+  // 🔥 check session from cookie on refresh
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/v1/auth/getme", {
+          withCredentials: true, 
+        });
+
+        setUser(res.data);
+      } catch (err) {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  // login just sets state (cookie already handled by backend)
+  const login = (userData) => {
+    setUser(userData);
+  };
+
+  const logout = async () => {
+    await axios.post("http://localhost:5000/api/v1/logout", {}, {
+      withCredentials: true,
+    });
+
+    setUser(null);
+  };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// 🔥 CUSTOM HOOK (THIS FIXES YOUR ERROR)
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);

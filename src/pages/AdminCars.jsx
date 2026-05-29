@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import instance from "../instances/instance";
 
 const AdminCars = () => {
   const [cars, setCars] = useState([]);
@@ -15,7 +16,7 @@ const AdminCars = () => {
 
   // FETCH CARS
   const fetchCars = async () => {
-    const res = await fetch("http://localhost:5000/api/cars");
+    const res = await instance.get("/cars");
     const data = await res.json();
     setCars(data);
   };
@@ -31,7 +32,9 @@ const AdminCars = () => {
 
   // ADD CAR
   const addCar = async () => {
-    await fetch("http://localhost:5000/api/cars", {
+    await instance.post("/cars", form);
+     
+      setForm({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
@@ -43,10 +46,7 @@ const AdminCars = () => {
 
   // DELETE CAR
   const deleteCar = async (id) => {
-    await fetch(`http://localhost:5000/api/cars/${id}`, {
-      method: "DELETE",
-    });
-
+    await instance.delete(`/cars/${id}`);
     fetchCars();
   };
 
@@ -58,7 +58,8 @@ const AdminCars = () => {
 
   // UPDATE CAR
   const updateCar = async () => {
-    await fetch(`http://localhost:5000/api/cars/${editId}`, {
+   await instance.put(`/cars/${editId}`, form);
+   setForm({
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),

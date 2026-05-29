@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
+import instance from "../instances/instance";
 
 export const AuthContext = createContext();
 
@@ -11,7 +12,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/v1/auth/getme", {
+        const res = await instance.get("auth/getme", {
           withCredentials: true, 
         });
 
@@ -32,7 +33,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    await axios.post("http://localhost:5000/api/v1/logout", {}, {
+    await instance.post("/logout", {}, {
       withCredentials: true,
     });
 
